@@ -11,6 +11,10 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 pub const NO_FILES_FOUND: &str = "No files found";
+/// Span styles a plugin puts on the last two spans of a snapshot line to have
+/// the UI strip them off and re-render them flush right on that line.
+pub const RIGHT_USAGE_STYLE: &str = "__maki_right_usage";
+pub const RIGHT_TIMESTAMP_STYLE: &str = "__maki_right_timestamp";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrepFileEntry {
@@ -817,6 +821,8 @@ pub struct TurnCompleteEvent {
     pub message: Message,
     pub usage: TokenUsage,
     pub model: String,
+    #[serde(skip)]
+    pub cost: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context_size: Option<u32>,
 }
