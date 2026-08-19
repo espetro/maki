@@ -230,7 +230,7 @@ impl App {
         // New work supersedes text held for recovery after an agent error.
         self.recoverable_queue.clear();
         self.status = Status::Streaming;
-        self.fire_session_autocmd("TurnStart", serde_json::json!({}));
+        self.fire_session_autocmd(maki_lua::HostEvent::TurnStart, serde_json::json!({}));
         if !display.is_empty() {
             self.main_chat().show_user_message(display);
         }

@@ -6,6 +6,7 @@
 use mlua::{Lua, Table};
 
 use crate::docs::{DocKind, FnDoc, ModuleDoc, api_docs};
+use crate::events::HostEvent;
 use crate::loader::lib_dir;
 use crate::plugin_permissions::Permission;
 
@@ -19,6 +20,7 @@ const REFERENCE_PLACEHOLDER: &str = "__MAKI_REFERENCE_PATH__";
 const EXAMPLE: &str = include_str!("../../plugins/glob/init.lua");
 
 const PERMISSIONS_ANCHOR: &str = "plugin-permissions";
+const EVENTS_ANCHOR: &str = "host-events";
 
 /// Generated from [`Permission::ALL`] so the reference can never drift from
 /// the real gate set. `anchored` adds the explicit heading id for the site;
@@ -56,6 +58,31 @@ The rules:
         .replace("{ANCHOR}", &anchor)
         .replace("{NAMES}", &keys.map(|k| format!("`{k}`")).join(", "))
         .replace("{KEYS}", &keys.map(|k| format!("{k} = true\n")).concat())
+}
+
+/// Generated from [`HostEvent::ALL`], the same list `fire_autocmd` accepts,
+/// so a new host event cannot ship undocumented.
+fn events_section(anchored: bool) -> String {
+    let anchor = if anchored {
+        format!(" {{#{EVENTS_ANCHOR}}}")
+    } else {
+        String::new()
+    };
+    let mut out = format!(
+        "## Host events{anchor}\n\n\
+         Events maki fires that plugins can subscribe to with\n\
+         `maki.api.create_autocmd`. Every event carries `data.session_id`.\n\n\
+         | Event | Fires when | Extra `data` fields |\n| --- | --- | --- |\n"
+    );
+    for event in HostEvent::ALL {
+        out.push_str(&format!(
+            "| `{}` | {} | {} |\n",
+            event.name(),
+            event.fires_when(),
+            event.extra_fields()
+        ));
+    }
+    out
 }
 
 const GUIDE: &str = r#"# Writing maki plugins
@@ -147,6 +174,8 @@ Lua errors are reserved for programmer mistakes, like passing a number where
 a string belongs.
 
 {PERMISSIONS}
+
+{EVENTS}
 "#;
 
 const COMPACT_HEADER: &str = r#"# Lua API
@@ -529,9 +558,11 @@ fn render(compact: bool) -> String {
         class_links()
     };
     let mut out = if compact {
-        String::from(COMPACT_HEADER)
+        format!("{COMPACT_HEADER}\n{}", events_section(false))
     } else {
-        HEADER.replace("{PERMISSIONS}", permissions_section(true).trim_end())
+        HEADER
+            .replace("{PERMISSIONS}", permissions_section(true).trim_end())
+            .replace("{EVENTS}", events_section(true).trim_end())
     };
 
     if !compact {

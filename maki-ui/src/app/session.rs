@@ -295,7 +295,7 @@ impl App {
         // Fire before the swap. A handler cleaning up after the session
         // that just ended needs its id, and the stamp always reads
         // whichever session is current.
-        self.fire_session_autocmd("SessionReset", serde_json::json!({}));
+        self.fire_session_autocmd(maki_lua::HostEvent::SessionReset, serde_json::json!({}));
         self.state.session = Arc::new(AppSession::new(
             &self.state.session.model,
             &self.state.session.cwd,

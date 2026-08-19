@@ -14,6 +14,7 @@ use crate::api::keymap::KeymapReader;
 use crate::api::options::{PluginOptionSpecs, PluginOpts};
 use crate::api::util::command::{HintReader, LuaCommandReader, UiAction};
 use crate::error::PluginError;
+use crate::events::HostEvent;
 use crate::plugin_permissions::{PluginPermissions, load_plugin_permissions};
 use crate::runtime::{self, ClickFallback, LuaThread, Request, RestoreItem};
 use maki_agent::prompt::ResolvedSlots;
@@ -562,9 +563,9 @@ impl EventHandle {
         }
     }
 
-    pub fn fire_autocmd(&self, event: &str, data: serde_json::Value) {
+    pub fn fire_autocmd(&self, event: HostEvent, data: serde_json::Value) {
         let _ = self.tx.try_send(Request::FireAutocmd {
-            event: event.to_owned(),
+            event: event.name().to_owned(),
             data,
         });
     }

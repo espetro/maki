@@ -22,7 +22,8 @@ use maki_agent::permissions::PermissionManager;
 use maki_agent::{AgentConfig, CancelToken, McpCommand, McpConfigErrors, McpHandle, mcp};
 use maki_config::{ModelPolicy, UiConfig};
 use maki_lua::{
-    EventHandle, HintReader, KeymapReader, LuaCommandReader, SessionReply, SessionRequest, UiAction,
+    EventHandle, HintReader, HostEvent, KeymapReader, LuaCommandReader, SessionReply,
+    SessionRequest, UiAction,
 };
 use maki_providers::Timeouts;
 use maki_providers::provider::{Provider, fetch_all_models, from_model};
@@ -683,7 +684,7 @@ impl<'t> EventLoop<'t> {
             }
             rt.last_status = status;
             handle.fire_autocmd(
-                "SessionStatusChanged",
+                HostEvent::SessionStatusChanged,
                 json!({
                     "session_id": rt.id(),
                     "title": rt.app.state.session.title,
@@ -706,7 +707,7 @@ impl<'t> EventLoop<'t> {
         self.last_focused = Some(id);
         self.ctx
             .lua_event_handle
-            .fire_autocmd("SessionFocusChanged", data);
+            .fire_autocmd(HostEvent::SessionFocusChanged, data);
     }
 
     fn start_mailbox_runs(&mut self) -> Dirty {

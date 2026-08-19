@@ -228,7 +228,7 @@ end }})
     );
     load(&host, "listener", &listener);
     host.event_handle()
-        .fire_autocmd("TurnEnd", serde_json::json!({ "k": "v" }));
+        .fire_autocmd(maki_lua::HostEvent::TurnEnd, serde_json::json!({ "k": "v" }));
     assert_eq!(exec_tool(&reg, "probe_turn_end"), "TurnEnd|nil|v");
 }
 

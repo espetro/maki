@@ -2,6 +2,7 @@ mod api;
 pub mod docs;
 pub mod docs_render;
 mod error;
+pub mod events;
 pub mod language;
 mod loader;
 pub(crate) mod plugin_permissions;
@@ -16,6 +17,7 @@ pub use api::util::command::{
 };
 pub use docs::{DocKind, FnDoc, ModuleDoc, ParamDoc, api_docs};
 pub use error::PluginError;
+pub use events::HostEvent;
 pub use loader::{EventHandle, PluginHost};
 pub use plugin_permissions::{Permission, PluginPermissions};
 pub use runtime::{KILL_GRACE, RestoreItem, WARM_TOOL_CAP};

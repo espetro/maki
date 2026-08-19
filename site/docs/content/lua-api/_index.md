@@ -77,6 +77,22 @@ The rules:
   `false` to revoke it. An empty file grants everything.
 - Invalid TOML: everything denied, with a warning in the log.
 
+## Host events {#host-events}
+
+Events maki fires that plugins can subscribe to with
+`maki.api.create_autocmd`. Every event carries `data.session_id`.
+
+| Event | Fires when | Extra `data` fields |
+| --- | --- | --- |
+| `TurnStart` | a user message starts an agent turn |  |
+| `TurnEnd` | the agent finishes its turn |  |
+| `TurnError` | the turn fails | `message` |
+| `ToolStart` | a tool call begins | `tool_id`, `tool` |
+| `ToolDone` | a tool call finishes | `tool_id`, `tool` |
+| `SessionReset` | the session is cleared; `session_id` names the session left behind |  |
+| `SessionFocusChanged` | focus moves to another session | `previous_session_id` (absent on initial startup) |
+| `SessionStatusChanged` | a session moves between `working`, `needs_input`, and `idle` | `status`, `title`, `focused` |
+
 ## Overview
 
 | Module | What it is for |
@@ -557,18 +573,9 @@ maki.api.create_autocmd({event}, {opts})
 Listen for one or more events. Returns an id you can pass to
 `del_autocmd` later to remove the listener.
 
-Built-in events fired by the host: `"TurnStart"`, `"TurnEnd"`,
-`"TurnError"`, `"ToolStart"`, `"ToolDone"`, `"SessionReset"`,
-`"SessionFocusChanged"`, and `"SessionStatusChanged"`. Plugins can also
+Built-in events fired by maki, with their payloads, are listed in the
+[Host events](#host-events) section of this reference. Plugins can also
 fire their own events with `exec_autocmds`.
-
-Each host event carries `data.session_id`. For `"SessionReset"` that
-is the session being left behind; the other events name the session now
-running or focused. Tool events also carry `data.tool_id` and `data.tool`.
-`"SessionFocusChanged"` also carries `data.previous_session_id` except on
-initial startup. `"SessionStatusChanged"` fires whenever a session moves
-between `"working"`, `"needs_input"`, and `"idle"`; it carries
-`data.status`, `data.title`, and `data.focused` (boolean).
 
 **Parameters:**
 

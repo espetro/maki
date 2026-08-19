@@ -60,7 +60,8 @@ use maki_agent::{
 };
 use maki_config::{ModelPolicy, UiConfig};
 use maki_lua::{
-    BuiltinAction, EventHandle, HintReader, HintSnapshot, KeymapReader, LuaCommandReader, WinView,
+    BuiltinAction, EventHandle, HintReader, HintSnapshot, HostEvent, KeymapReader,
+    LuaCommandReader, WinView,
 };
 use maki_providers::{Model, ThinkingConfig, add_cost};
 use maki_storage::StateDir;
@@ -329,7 +330,7 @@ impl App {
         self.status_bar.flash(msg);
     }
 
-    pub(crate) fn fire_session_autocmd(&self, event: &str, mut data: serde_json::Value) {
+    pub(crate) fn fire_session_autocmd(&self, event: HostEvent, mut data: serde_json::Value) {
         if let Some(map) = data.as_object_mut() {
             map.insert(
                 "session_id".into(),
@@ -1069,14 +1070,14 @@ impl App {
 
         match &envelope.event {
             AgentEvent::ToolStart(event) => self.fire_session_autocmd(
-                "ToolStart",
+                HostEvent::ToolStart,
                 serde_json::json!({
                     "tool_id": event.id,
                     "tool": event.tool,
                 }),
             ),
             AgentEvent::ToolDone(event) => self.fire_session_autocmd(
-                "ToolDone",
+                HostEvent::ToolDone,
                 serde_json::json!({
                     "tool_id": event.id,
                     "tool": event.tool,
@@ -1195,7 +1196,7 @@ impl App {
                     self.chat_index.clear();
                     self.subagent_answers.clear();
                     self.status = Status::Idle;
-                    self.fire_session_autocmd("TurnEnd", serde_json::json!({}));
+                    self.fire_session_autocmd(HostEvent::TurnEnd, serde_json::json!({}));
                     if self.exit_on_done {
                         self.exit_request = ExitRequest::Success;
                     }
@@ -1209,7 +1210,7 @@ impl App {
                     self.queue.clear();
                     self.chat_index.clear();
                     self.fire_session_autocmd(
-                        "TurnError",
+                        HostEvent::TurnError,
                         serde_json::json!({ "message": message }),
                     );
                     if self.exit_on_done {
