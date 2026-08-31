@@ -5,7 +5,12 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState};
 
+use crate::theme;
+
 pub const SCROLLBAR_THUMB: &str = "\u{2590}";
+
+const THIN_TRACK: &str = "\u{2502}";
+const HEAVY_THUMB: &str = "\u{2503}";
 
 static ENABLED: AtomicBool = AtomicBool::new(true);
 
@@ -33,19 +38,28 @@ pub fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, content_len: u32
     frame.render_stateful_widget(scrollbar, area, &mut state);
 }
 
-/// Paints the scrollbar into the border column immediately right of `inner`,
-/// so no content cell is overwritten and copied text stays clean.
+/// Paints the scrollbar onto the dialog's right border: the track is a `│` in
+/// the panel border color, so the border stays continuous, and the thumb is a
+/// heavy `┃` that reads as the border thickening under the viewport.
 pub fn render_vertical_scrollbar_in_border(
     frame: &mut Frame,
     inner: Rect,
     content_len: u32,
     position: u32,
 ) {
-    if inner.height <= 2 || inner.right() >= frame.area().width {
+    if inner.height <= 2 {
         return;
     }
     let rail = Rect::new(inner.right(), inner.y + 1, 1, inner.height - 2);
-    render_vertical_scrollbar(frame, rail, content_len, position);
+    let max_scroll = content_len.saturating_sub(u32::from(rail.height));
+    let mut state = ScrollbarState::default()
+        .content_length(max_scroll as usize + 1)
+        .position(position as usize);
+    let scrollbar = scrollbar_widget()
+        .track_symbol(Some(THIN_TRACK))
+        .track_style(theme::current().panel_border)
+        .thumb_symbol(HEAVY_THUMB);
+    frame.render_stateful_widget(scrollbar, rail, &mut state);
 }
 
 fn scrollbar_widget() -> Scrollbar<'static> {
