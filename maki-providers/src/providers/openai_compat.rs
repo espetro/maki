@@ -382,12 +382,26 @@ pub fn convert_tools(anthropic_tools: &Value) -> Value {
         tools
             .iter()
             .filter_map(|t| {
+                let schema = t.get("input_schema");
+                let mut parameters = match schema {
+                    Some(Value::Object(map)) if !map.is_empty() => json!(map),
+                    _ => json!({"type": "object", "properties": {}}),
+                };
+                // Only object-shaped (or untyped) schemas get the defaults;
+                // typed non-object schemas like arrays must keep their shape.
+                if parameters.get("type").is_none() {
+                    parameters["type"] = json!("object");
+                }
+                let is_object_shaped = parameters["type"] == "object";
+                if is_object_shaped && parameters.get("properties").is_none() {
+                    parameters["properties"] = json!({});
+                }
                 Some(json!({
                     "type": "function",
                     "function": {
                         "name": t.get("name")?,
                         "description": t.get("description")?,
-                        "parameters": t.get("input_schema")?,
+                        "parameters": parameters,
                     }
                 }))
             })
@@ -981,6 +995,26 @@ data: [DONE]\n";
         assert_eq!(tool["function"]["name"], "bash");
         assert_eq!(tool["function"]["description"], "Run a command");
         assert_eq!(tool["function"]["parameters"]["type"], "object");
+    }
+
+    #[test]
+    fn convert_tools_empty_schema_gets_object_defaults() {
+        let anthropic = json!([
+            {"name": "noparams", "description": "d", "input_schema": {}},
+            {"name": "notype", "description": "d", "input_schema": {"properties": {}}},
+            {"name": "noschema", "description": "d"},
+            {"name": "arrayparams", "description": "d", "input_schema": {"type": "array", "items": {"type": "string"}}}
+        ]);
+
+        let openai = convert_tools(&anthropic);
+        let empty = openai[0]["function"]["parameters"].clone();
+        assert_eq!(empty, json!({"type": "object", "properties": {}}));
+        let no_type = &openai[1]["function"]["parameters"];
+        assert_eq!(no_type["type"], "object");
+        assert_eq!(no_type["properties"], json!({}));
+        let array_params = &openai[3]["function"]["parameters"];
+        assert_eq!(array_params["type"], "array");
+        assert!(array_params.get("properties").is_none());
     }
 
     #[test]
